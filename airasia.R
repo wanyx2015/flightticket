@@ -3,13 +3,28 @@
 library(rvest)
 library(lubridate)
 
+
+###
+###  Start of program configuration
+###
+
+from <- "PVG"
+to <- "DPS"
+startday <- "2016-05-13"
+startday <- today()
+numOfTry <- 5
+numOfDays <- 360
+
+###
+###  End of program configuration
+###
+
+
 source ("./qatar_include.R")
 setwd("D:/01.Personal/Coursera/01 Data Science/JHU/flightticket")
 
 getPrice <- function(url, whichday){
     
-    #url <- "https://booking.airasia.com/Flight/Select?o1=PVG&d1=PEN&dd1=2016-03-05&ADT=1&CHD=0&inl=0&s=true&mon=true&cc=CNY"
-    #url <- "https://booking.airasia.com/Flight/Select?s=False&o1=HGH&d1=BWN&ADT=1&dd1=2016-04-02&mon=true"
     #url <- "https://booking.airasia.com/Flight/Select?s=False&o1=PVG&d1=DPS&ADT=1&dd1=2016-05-13&mon=true"
     airasia <- read_html(url)
     
@@ -120,92 +135,80 @@ airasia_airport_list <- function(){
 
 
 
-# for (from in airasia_airport_list()){
-#     for (to in airasia_airport_list()){
-        from <- "PVG"
-        to <- "DPS"
+
+
+
+
+if(from == to) break
+newday <- startday
+url1 <- "https://booking.airasia.com/Flight/Select?s=False&o1="
+url2 <- "&d1="
+url3 <- "&ADT=1&dd1="
+url4 <- "&mon=true"
+
+# sample URL:  https://booking.airasia.com/Flight/Select?s=False&o1=PVG&d1=DPS&ADT=1&dd1=2016-05-13&mon=true
+
+
+url <- paste(url1, from, url2, to, url3, sep = "")
+
+f <- data.frame(stringsAsFactors = FALSE)
+
+tryagain <- numOfTry
+
+for (i in 1:numOfDays){
+    
+    failed <- FALSE
+    closeAllConnections()
+    newday <- startday + days(i)
+    newurl <- paste(paste(url, newday, sep = ""), url4, sep = "")
+    print(newurl)
+    
+    tryCatch({
+        result <- getPrice(newurl, newday)
+    }, error=function(e){
+        failed <- TRUE
+        cat("ERROR :",conditionMessage(e), "\n")
+    })
+    
+    
+    while(is.null(result)) {
         
-        if(from == to) break
-        startday <- today()
-        newday <- startday
-        url1 <- "https://booking.airasia.com/Flight/Select?s=False&o1="
-        url2 <- "&d1="
-        url3 <- "&ADT=1&dd1="
-        url4 <- "&mon=true"
+        # result is null, so try again...
+        print(paste("Failed, try again ...", tryagain))
         
-        url <- paste(url1, from, sep = "")
-        url <- paste(url, url2, sep = "")
-        url <- paste(url, to, sep = "")
-        url <- paste(url, url3, sep = "")
-        
-        f <- list()
-        f <- data.frame(stringsAsFactors = FALSE)
-        
-        #colnames(f) <- c("flightno", "departap", "departtime", "arriveap", "arrivetime", "totalhour", "lowfare")
-        
-        
-        #url <- "https://booking.airasia.com/Flight/Select?s=False&o1=HGH&d1=CNX&ADT=1&dd1="
-        tryagain <- 5
-        for (i in 1:360){
+        # number of try used up?
+        if(tryagain >0){
             
-            failed <- FALSE
-            closeAllConnections()
-            newday <- startday + days(i)
-            newurl <- paste(paste(url, newday, sep = ""), "&mon=true", sep = "")
-            print(newurl)
+            tryagain <- tryagain -1
             
             tryCatch({
                 result <- getPrice(newurl, newday)
-            }, error=function(e){
-                print(e)
-                failed <- TRUE
-                #cat("ERROR :",conditionMessage(e), "\n")
-                })
+            }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")})                    
             
-            
-            while(is.null(result)) {
-                print(paste("Failed, try again ...", tryagain))
-                if(tryagain >0){
-                    tryagain <- tryagain -1
-                    
-                    
-                    
-                    tryCatch({
-                        result <- getPrice(newurl, newday)
-                    }, error=function(e){
-                        #print(e)
-                        cat("ERROR :",conditionMessage(e), "\n")
-                    })                    
-                    
-                    Sys.sleep(5)
-                }
-                else if (tryagain ==0){
-                    tryagain <- 3
-                    break
-                    }
-            }
-            
-            
-            if (!is.null(result)) {
-                f <- rbind(f, result)
-                tryagain <- 5
-            }
-            
-            if(i == 5 & nrow(f) == 0){
-                print ("No flight......")
-                break
-            }
-                
-            result <- NULL
-            
-            #f <- c(f, getPrice(newurl))
-            
-            #print(f[nrow(f),])
-            Sys.sleep(3)
+            Sys.sleep(5)
         }
-        
-        filename <- getFilename(from, to)
-        if(nrow(f) > 0) write.csv(f, file = filename)
-#     }
-# }
+        else if (tryagain ==0){
+            tryagain <- numOfTry
+            break
+        }
+    }
+    
+    
+    if (!is.null(result)) {
+        f <- rbind(f, result)
+        tryagain <- numOfTry
+    }
+    
+    if(i == 5 & nrow(f) == 0){
+        print ("No flight......")
+        break
+    }
+    
+    result <- NULL
+    
+    Sys.sleep(3)
+}
+
+filename <- getFilename(from, to)
+if(nrow(f) > 0) write.csv(f, file = filename)
 
