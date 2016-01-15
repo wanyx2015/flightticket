@@ -1,4 +1,3 @@
-#data <- read.csv("activity.csv")
 
 library(rvest)
 library(lubridate)
@@ -8,16 +7,42 @@ library(lubridate)
 ###  Start of program configuration
 ###
 
-from <- "PVG"
-to <- "DPS"
+from <- "HGH"
+to <- "CNX"
 startday <- "2016-05-13"
 startday <- today()
-numOfTry <- 5
 numOfDays <- 360
+
+numOfTry <- 5
 
 ###
 ###  End of program configuration
 ###
+
+
+# ENABLE command line arguments
+args <- commandArgs(TRUE)
+#commandArgs()
+
+if(length(args) != 4){
+    print("Usage: Rscript.exe airasia.R FROM_AIRPORT TO_AIRPORT START_DAY NUM_OF_DAYS")
+    print("Example: Rscript.exe airasia.R HGH CNX 2016_01_17 10")
+    print("Using default: from = HGH (Hangzhou), to = CNX (Chiang Mai), startday = today, numofdays = 360")
+    
+}else{
+    from <- args[1]
+    to <- args[2]
+    startday <- args[3]
+    numOfDays <- args[4]
+    
+    if(startday == "today") startday <- today()
+    
+}
+
+
+
+
+
 
 
 source ("./qatar_include.R")
