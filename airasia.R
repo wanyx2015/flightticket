@@ -1,7 +1,8 @@
 
 library(rvest)
 library(lubridate)
-
+# source ("./qatar_include.R")
+setwd("D:/01.Personal/Coursera/01 Data Science/JHU/flightticket")
 
 ###
 ###  Start of program configuration
@@ -28,7 +29,6 @@ if(length(args) != 4){
     print("Usage: Rscript.exe airasia.R FROM_AIRPORT TO_AIRPORT START_DAY NUM_OF_DAYS")
     print("Example: Rscript.exe airasia.R HGH CNX 2016_01_17 10")
     print("Using default: from = HGH (Hangzhou), to = CNX (Chiang Mai), startday = today, numofdays = 360")
-    
 }else{
     from <- args[1]
     to <- args[2]
@@ -43,15 +43,13 @@ if(length(args) != 4){
 
 
 
-
-
-source ("./qatar_include.R")
-setwd("D:/01.Personal/Coursera/01 Data Science/JHU/flightticket")
-
 getPrice <- function(url, whichday){
+    
+    closeAllConnections()
     
     #url <- "https://booking.airasia.com/Flight/Select?s=False&o1=PVG&d1=DPS&ADT=1&dd1=2016-05-13&mon=true"
     airasia <- read_html(url)
+    closeAllConnections()
     
     multistop <- airasia %>%
         html_nodes(".avail-stops") %>%
@@ -149,6 +147,7 @@ getPrice <- function(url, whichday){
     print(flight)
     flight
     
+    
 }
 
 airasia_airport_list <- function(){
@@ -158,7 +157,11 @@ airasia_airport_list <- function(){
     return(ap[-1])
 }
 
-
+getFilename <- function (from, to) {
+    random_num <- round(abs(rnorm(100)[1]) * 100000, 0)
+    ts <- gsub(" ", "_", gsub(":", "-", Sys.time()))
+    fname <- paste(from, "-", to, "-", ts, ".txt", sep = "")
+}
 
 
 
@@ -194,7 +197,6 @@ for (i in 1:numOfDays){
         failed <- TRUE
         cat("ERROR :",conditionMessage(e), "\n")
     })
-    
     
     while(is.null(result)) {
         
