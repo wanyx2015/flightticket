@@ -6,8 +6,8 @@ library(RSelenium)
 ###  Setting parameters
 ###
 fromCity <- c("Shanghai")
-toCity <- c("Paris")
-departDate <- "28-Jan-2016"
+toCity <- c("Frankfurt", "Paris")
+departDate <- "28-Feb-2016"
 numOfWeeks <- 40
 ###
 ###  End of parameters
@@ -20,7 +20,7 @@ setwd("D:/01.Personal/Coursera/01 Data Science/JHU/flightticket")
 source("./qatar_include.R")
 
 startCrawl <- function (fromCity, toCity, departDate, numOfWeeks) {
-    #startServer()
+    startServer()
     
     Sys.sleep(10)
     
@@ -66,6 +66,7 @@ startCrawl <- function (fromCity, toCity, departDate, numOfWeeks) {
     for (i in 1:numOfWeeks){
         
         temp <- getPriceInfo(rd)
+        print(temp)
         result <- c(result, temp)
         
         nextPage(rd)
@@ -75,7 +76,7 @@ startCrawl <- function (fromCity, toCity, departDate, numOfWeeks) {
     filename = getFilename(from, to)
     write(result, f=filename)
     
-    #rd$closeServer()
+    rd$closeServer()
     
     
 }
